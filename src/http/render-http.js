@@ -155,10 +155,9 @@ function getOptsFromQuery(query) {
     goto: {
       timeout: query['goto.timeout'],
       waitUntil: query['goto.waitUntil'],
-      networkIdleInflight: query['goto.networkIdleInflight'],
-      networkIdleTimeout: query['goto.networkIdleTimeout'],
     },
     pdf: {
+      fullPage: query['pdf.fullPage'],
       scale: query['pdf.scale'],
       displayHeaderFooter: query['pdf.displayHeaderFooter'],
       footerTemplate: query['pdf.footerTemplate'],

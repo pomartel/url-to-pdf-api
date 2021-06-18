@@ -39,8 +39,6 @@ const sharedQuerySchema = Joi.object({
   'viewport.isLandscape': Joi.boolean(),
   'goto.timeout': Joi.number().min(0).max(60000),
   'goto.waitUntil': Joi.string().min(1).max(2000),
-  'goto.networkIdleInflight': Joi.number().min(0).max(1000),
-  'goto.networkIdleTimeout': Joi.number().min(0).max(1000),
   'pdf.scale': Joi.number().min(0).max(1000),
   'pdf.displayHeaderFooter': Joi.boolean(),
   'pdf.landscape': Joi.boolean(),
@@ -48,6 +46,7 @@ const sharedQuerySchema = Joi.object({
   'pdf.format': Joi.string().min(1).max(2000),
   'pdf.width': Joi.string().min(1).max(2000),
   'pdf.height': Joi.string().min(1).max(2000),
+  'pdf.fullPage': Joi.boolean(),
   'pdf.footerTemplate': Joi.string(),
   'pdf.headerTemplate': Joi.string(),
   'pdf.margin.top': Joi.string().min(1).max(2000),
@@ -94,8 +93,6 @@ const renderBodyObject = Joi.object({
   goto: Joi.object({
     timeout: Joi.number().min(0).max(60000),
     waitUntil: Joi.string().min(1).max(2000),
-    networkIdleInflight: Joi.number().min(0).max(1000),
-    networkIdleTimeout: Joi.number().min(0).max(1000),
   }),
   pdf: Joi.object({
     scale: Joi.number().min(0).max(1000),
@@ -105,6 +102,7 @@ const renderBodyObject = Joi.object({
     format: Joi.string().min(1).max(2000),
     width: Joi.string().min(1).max(2000),
     height: Joi.string().min(1).max(2000),
+    fullPage: Joi.boolean(),
     footerTemplate: Joi.string(),
     headerTemplate: Joi.string(),
     margin: Joi.object({
