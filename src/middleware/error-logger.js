@@ -15,7 +15,7 @@ function createErrorLogger(_opts) {
     const log = logger[logLevel];
 
     if (opts.logRequest(status)) {
-      logRequestDetails(logLevel, req, status);
+      logRequestDetails(logLevel, req);
     }
 
     if (opts.logStackTrace(status)) {
@@ -35,7 +35,6 @@ function getLogLevel(status) {
 function logRequestDetails(logLevel, req) {
   logger[logLevel]('Request headers:', deepSupressLongStrings(req.headers));
   logger[logLevel]('Request parameters:', deepSupressLongStrings(req.params));
-  logger[logLevel]('Request body:', req.body);
 }
 
 function deepSupressLongStrings(obj) {
