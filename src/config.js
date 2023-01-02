@@ -4,7 +4,7 @@
 const config = {
   PORT: Number(process.env.PORT) || 9000,
   NODE_ENV: process.env.NODE_ENV,
-  LOG_LEVEL: process.env.LOG_LEVEL,
+  LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   ALLOW_HTTP: process.env.ALLOW_HTTP === 'true',
   DEBUG_MODE: process.env.DEBUG_MODE === 'true',
   DISABLE_HTML_INPUT: process.env.DISABLE_HTML_INPUT === 'true',
