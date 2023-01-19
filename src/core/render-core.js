@@ -70,7 +70,9 @@ async function render(_opts = {}) {
     opts.pdf.format = undefined;
   }
 
-  logOpts(opts);
+  if (config.LOG_LEVEL === 'silly') {
+    logOpts(opts);
+  }
 
   const browser = await createBrowser(opts);
   const page = await browser.newPage();
