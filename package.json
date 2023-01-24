@@ -4,7 +4,7 @@
   "description": "Web page PDF rendering done right. Packaged to an easy API.",
   "main": "src/index.js",
   "engines": {
-    "node": "14.x.x"
+    "node": "16.x.x"
   },
   "scripts": {
     "start": "env-cmd nodemon --watch ./src -e js src/index.js",
@@ -33,7 +33,7 @@
     "morgan": "^1.9.1",
     "normalize-url": "^5.0.0",
     "pdf-parse": "^1.1.1",
-    "puppeteer": "^2.0.0",
+    "puppeteer": "^19.6.0",
     "server-destroy": "^1.0.1",
     "winston": "^2.3.1"
   },
