@@ -1,5 +1,7 @@
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/alvarcarto/url-to-pdf-api)
 
+![Pipeline Status](https://github.com/kesko-dev/url-to-pdf-api/actions/workflows/url-to-pdf-api-pipeline.yml/badge.svg)
+
 # URL to PDF Microservice
 
 > Web page PDF rendering done right. Microservice for rendering receipts, invoices, or any content. Packaged to an easy API.
