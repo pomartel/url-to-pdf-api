@@ -2,27 +2,9 @@
 
 # URL to PDF Microservice
 
-This repo is initially forked from https://github.com/alvarcarto/url-to-pdf-api. The original repo haven't been maintained for a long time.
+This repo is initially forked from https://github.com/alvarcarto/url-to-pdf-api. The original repo haven't been maintained for a long time. Initial document can be found on that repo. This readme is cleaned for the Kesko purposes.
 
-> Web page PDF rendering done right. Microservice for rendering receipts, invoices, or any content. Packaged to an easy API.
-
-![Logo](docs/logo.png)
-
-**⚠️ WARNING ⚠️** *Don't serve this API publicly to the internet unless you are aware of the
-risks. It allows API users to run any JavaScript code inside a Chrome session on the server.
-It's fairly easy to expose the contents of files on the server. You have been warned!. See https://github.com/alvarcarto/url-to-pdf-api/issues/12 for background.*
-
-**⭐️ Features:**
-
-* Converts any URL or HTML content to a PDF file or an image (PNG/JPEG)
-* Rendered with Headless Chrome, using [Puppeteer](https://github.com/GoogleChrome/puppeteer). The PDFs should match to the ones generated with a desktop Chrome.
-* Sensible defaults but everything is configurable.
-* Single-page app (SPA) support. Waits until all network requests are finished before rendering.
-* Easy deployment to Heroku. We love Lambda but...Deploy to Heroku button.
-* Renders lazy loaded elements. *(scrollPage option)*
-* Supports optional `x-api-key` authentication. *(`API_TOKENS` env var)*
-
-Usage is as simple as https://{url-to-pdf}/api/render?url=http://google.com. There's also a `POST /api/render` if you prefer to send options in the body.
+> Microservice for rendering receipts, invoices, or any content. Packaged to an easy API.
 
 **🔍 Why?**
 
@@ -32,12 +14,6 @@ or any content.
 
 PDFs can be generated in many ways, but one of them is to convert HTML+CSS
 content to a PDF. This API does just that.
-
-**🚀 Shortcuts:**
-
-* [Examples](#examples)
-* [API](#api)
-* [I want to run this myself](#development)
 
 ## How it works
 
@@ -56,63 +32,53 @@ and requests are direct connections to it.
 
 ## Examples
 
-**⚠️ Restrictions ⚠️:**
-
-* For security reasons the urls have been restricted and HTML rendering is disabled. For full demo, run this app locally.
-
 **The most minimal example, render google.com**
 
-https://url-to-pdf-api.herokuapp.com/api/render?url=http://google.com
+/api/render?url=http://google.com
 
 **The most minimal example, render google.com as PNG image**
 
-https://url-to-pdf-api.herokuapp.com/api/render?output=screenshot&url=http://google.com
-
+/api/render?output=screenshot&url=http://google.com
 
 **Use the default @media print instead of @media screen.**
 
-https://url-to-pdf-api.herokuapp.com/api/render?url=http://google.com&emulateScreenMedia=false
+/api/render?url=http://google.com&emulateScreenMedia=false
 
 **Use scrollPage=true which tries to reveal all lazy loaded elements. Not perfect but better than without.**
 
-https://url-to-pdf-api.herokuapp.com/api/render?url=http://www.andreaverlicchi.eu/lazyload/demos/lazily_load_lazyLoad.html&scrollPage=true
+/api/render?url=http://www.andreaverlicchi.eu/lazyload/demos/lazily_load_lazyLoad.html&scrollPage=true
 
 **Render only the first page.**
 
-https://url-to-pdf-api.herokuapp.com/api/render?url=https://en.wikipedia.org/wiki/Portable_Document_Format&pdf.pageRanges=1
+/api/render?url=https://en.wikipedia.org/wiki/Portable_Document_Format&pdf.pageRanges=1
 
 **Render A5-sized PDF in landscape.**
 
-https://url-to-pdf-api.herokuapp.com/api/render?url=http://google.com&pdf.format=A5&pdf.landscape=true
+/api/render?url=http://google.com&pdf.format=A5&pdf.landscape=true
 
 **Add 2cm margins to the PDF.**
 
-https://url-to-pdf-api.herokuapp.com/api/render?url=http://google.com&pdf.margin.top=2cm&pdf.margin.right=2cm&pdf.margin.bottom=2cm&pdf.margin.left=2cm
+/api/render?url=http://google.com&pdf.margin.top=2cm&pdf.margin.right=2cm&pdf.margin.bottom=2cm&pdf.margin.left=2cm
 
 **Wait for extra 1000ms before render.**
 
-https://url-to-pdf-api.herokuapp.com/api/render?url=http://google.com&waitFor=1000
-
+/api/render?url=http://google.com&waitFor=1000
 
 **Download the PDF with a given attachment name**
 
-https://url-to-pdf-api.herokuapp.com/api/render?url=http://google.com&attachmentName=google.pdf
+/api/render?url=http://google.com&attachmentName=google.pdf
 
 **Wait for an element matching the selector `input` appears.**
 
-https://url-to-pdf-api.herokuapp.com/api/render?url=http://google.com&waitFor=input
+/api/render?url=http://google.com&waitFor=input
 
 **Render HTML sent in JSON body**
-
-*NOTE: Demo app has disabled html rendering for security reasons.*
 
 ```bash
 curl -o html.pdf -XPOST -d'{"html": "<body>test</body>"}' -H"content-type: application/json" http://localhost:9000/api/render
 ```
 
 **Render HTML sent as text body**
-
-*NOTE: Demo app has disabled html rendering for security reasons.*
 
 ```bash
 curl -o html.pdf -XPOST -d@test/resources/large.html -H"content-type: text/html" http://localhost:9000/api/render
@@ -204,13 +170,11 @@ screenshot.clip.width | number | - | Specifies width of clipping region of the p
 screenshot.clip.height | number | - | Specifies height of clipping region of the page.
 screenshot.selector | string | - | Specifies css selector to clip the screenshot to.
 
-
 **Example:**
 
 ```bash
-curl -o google.pdf https://url-to-pdf-api.herokuapp.com/api/render?url=http://google.com
+curl -o google.pdf http://localhost:9000/api/render?url=http://google.com
 ```
-
 
 ### POST /api/render - (JSON)
 
@@ -299,11 +263,12 @@ First, clone the repository and cd into it.
 * `npm install`
 * `npm start` Start express server locally
 * Server runs at http://localhost:9000 or what `$PORT` env defines
+* Requests need to have api-x-token in header. Tokens are read from `.env` `API_TOKENS`.
 
 ### Techstack
 
 * Node 18
 * [Express.js](https://expressjs.com/) app with a nice internal architecture, based on [these conventions](https://github.com/kimmobrunfeldt/express-example).
 * Hapi-style Joi validation with [express-validation](https://github.com/andrewkeig/express-validation)
-* Heroku + [Puppeteer buildpack](https://github.com/jontewks/puppeteer-heroku-buildpack)
+* Heroku + buildpacks: [heroku-buildpack-google-chrome](https://github.com/heroku/heroku-buildpack-google-chrome.git), [heroku-buildpack-nodejs](http://github.com/heroku/heroku-buildpack-nodejs.git) [heroku-buildpack-converter-fonts](https://github.com/debitoor/heroku-buildpack-converter-fonts)
 * [Puppeteer](https://github.com/GoogleChrome/puppeteer) to control Chrome
