@@ -1,8 +1,8 @@
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/alvarcarto/url-to-pdf-api)
-
 ![Pipeline Status](https://github.com/kesko-dev/url-to-pdf-api/actions/workflows/url-to-pdf-api-pipeline.yml/badge.svg)
 
 # URL to PDF Microservice
+
+This repo is initially forked from https://github.com/alvarcarto/url-to-pdf-api. The original repo haven't been maintained for a long time.
 
 > Web page PDF rendering done right. Microservice for rendering receipts, invoices, or any content. Packaged to an easy API.
 
@@ -22,7 +22,7 @@ It's fairly easy to expose the contents of files on the server. You have been wa
 * Renders lazy loaded elements. *(scrollPage option)*
 * Supports optional `x-api-key` authentication. *(`API_TOKENS` env var)*
 
-Usage is as simple as https://url-to-pdf-api.herokuapp.com/api/render?url=http://google.com. There's also a `POST /api/render` if you prefer to send options in the body.
+Usage is as simple as https://{url-to-pdf}/api/render?url=http://google.com. There's also a `POST /api/render` if you prefer to send options in the body.
 
 **🔍 Why?**
 
@@ -54,17 +54,11 @@ and requests are direct connections to it.
 
 * Heavy pages may cause Chrome to crash if the server doesn't have enough RAM.
 
-* Docker image for this can be found here: https://github.com/restorecommerce/pdf-rendering-srv
-
-
 ## Examples
 
 **⚠️ Restrictions ⚠️:**
 
-* For security reasons the urls have been restricted and HTML rendering is disabled. For full demo, run this app locally or deploy to Heroku.
-* The demo Heroku app runs on a free dyno which sleep after idle. A request to sleeping dyno may take even 30 seconds.
-
-
+* For security reasons the urls have been restricted and HTML rendering is disabled. For full demo, run this app locally.
 
 **The most minimal example, render google.com**
 
@@ -295,24 +289,7 @@ curl -o receipt.html https://rawgit.com/wildbit/postmark-templates/master/templa
 curl -o html.pdf -XPOST -d@receipt.html -H"content-type: text/html" http://localhost:9000/api/render?pdf.scale=1
 ```
 
-## Development
-
-To get this thing running, you have two options: run it in Heroku, or locally.
-
-The code requires Node 8+ (async, await).
-
-#### 1. Heroku deployment
-
-Scroll this readme up to the Deploy to Heroku -button. Click it and follow
-instructions.
-
-**WARNING:** *Heroku dynos have a very low amount of RAM. Rendering heavy pages
-may cause Chrome instance to crash inside Heroku dyno. 512MB should be
-enough for most real-life use cases such as receipts. Some news sites may need
-even 2GB of RAM.*
-
-
-#### 2. Local development
+## Local development
 
 First, clone the repository and cd into it.
 
@@ -322,7 +299,6 @@ First, clone the repository and cd into it.
 * `npm install`
 * `npm start` Start express server locally
 * Server runs at http://localhost:9000 or what `$PORT` env defines
-
 
 ### Techstack
 
