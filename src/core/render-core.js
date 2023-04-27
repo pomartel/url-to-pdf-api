@@ -18,7 +18,6 @@ async function createBrowser(opts) {
   }
   browserOpts.headless = !config.DEBUG_MODE;
   browserOpts.args = ['--no-sandbox', '--disable-setuid-sandbox'];
-  browserOpts.executablePath = 'google-chrome';
   if (!opts.enableGPU || navigator.userAgent.indexOf('Win') !== -1) {
     browserOpts.args.push('--disable-gpu');
   }
