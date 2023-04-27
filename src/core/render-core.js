@@ -107,15 +107,15 @@ async function render(_opts = {}) {
 
   let data;
   try {
-    logger.info('Set browser viewport..');
+    logger.debug('Set browser viewport..');
     await page.setViewport(opts.viewport);
     if (opts.emulateScreenMedia) {
-      logger.info('Emulate @media screen..');
+      logger.debug('Emulate @media screen..');
       await page.emulateMediaType('screen');
     }
 
     if (opts.cookies && opts.cookies.length > 0) {
-      logger.info('Setting cookies..');
+      logger.debug('Setting cookies..');
 
       const client = await page.target().createCDPSession();
 
@@ -124,20 +124,20 @@ async function render(_opts = {}) {
     }
 
     if (_.isString(opts.html)) {
-      logger.info('Set HTML ..');
+      logger.debug('Set HTML ..');
       await page.setContent(opts.html, opts.goto);
     } else {
-      logger.info(`Goto url ${opts.url} ..`);
+      logger.debug(`Goto url ${opts.url} ..`);
       await page.goto(opts.url, opts.goto);
     }
 
     if (_.isNumber(opts.waitFor) || _.isString(opts.waitFor)) {
-      logger.info(`Wait for ${opts.waitFor} ..`);
+      logger.debug(`Wait for ${opts.waitFor} ..`);
       await page.waitFor(opts.waitFor);
     }
 
     if (opts.scrollPage) {
-      logger.info('Scroll page ..');
+      logger.debug('Scroll page ..');
       await scrollPage(page);
     }
 
@@ -160,7 +160,7 @@ async function render(_opts = {}) {
       throw err;
     }
 
-    logger.info('Rendering ..');
+    logger.debug('Rendering ..');
     if (config.DEBUG_MODE) {
       const msg = `\n\n---------------------------------\n
         Chrome does not support rendering in "headed" mode.
@@ -200,7 +200,7 @@ async function render(_opts = {}) {
     logger.error(err.stack);
     throw err;
   } finally {
-    logger.info('Closing browser..');
+    logger.debug('Closing browser..');
     if (!config.DEBUG_MODE) {
       await browser.close();
     }
