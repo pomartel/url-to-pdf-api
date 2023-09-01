@@ -9,7 +9,8 @@
   "scripts": {
     "start": "env-cmd nodemon --watch ./src -e js src/index.js",
     "test": "mocha --timeout 10000 && npm run lint",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "heroku-postbuild": "mkdir ./.cache && mv /app/.cache/puppeteer ./.cache"
   },
   "repository": {
     "type": "git",
