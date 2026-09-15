@@ -7,7 +7,10 @@ Nanode in Newark (`us-east`), at `96.126.107.57`. It uses Ubuntu 24.04 LTS,
 Node 22.23.2, the exact Puppeteer version in package.json, and Puppeteer's
 matching Chrome build. SSH: `ssh po@96.126.107.57`.
 
-The intended staging endpoint is `https://pdf-linode.app.do/api/render`.
+The live staging endpoint is `https://pdf-linode.app.do/api/render`.
+Cloudflare has a DNS-only A record pointing to `96.126.107.57` (TTL 300),
+and Caddy serves a valid Let's Encrypt certificate. The DNS activation timer
+has completed and is disabled; Caddy handles certificate renewal.
 **Production `pdf.app.do` and the Heroku apps have not been switched.**
 
 ### Recreate the server
@@ -169,6 +172,19 @@ migration.
   rebooted and all four units (renderer, Caddy, firewall, DNS timer) recovered.
   The first post-reboot 31-page export completed in 10.73 seconds; cold-start
   service peak memory was 711,102,464 bytes (about 678 MiB), without swap.
-- Public HTTPS remains pending the DNS-only A record. Tunnel tests do not count
-  as certificate or public-endpoint validation. The DNS timer activates HTTPS
-  automatically once the temporary hostname points at the instance.
+- Public staging DNS and HTTPS are now verified. The DNS-only A record is
+  `pdf-linode.app.do -> 96.126.107.57`, TTL 300. Caddy obtained a valid Let's
+  Encrypt certificate; HTTP redirects to HTTPS with 308. The DNS activation
+  timer is disabled after successful activation.
+- Public HTTPS checks passed with certificate and hostname verification enabled:
+  authenticated health 200; missing/invalid API keys 401; unapproved render host
+  403. Normal local DNS resolution and authenticated HTTPS health were also
+  verified after the previous wildcard answer expired from caches.
+- Real HTTPS exports passed: 31-page English report in 9.72 seconds, one-page
+  invoice in 5.87 seconds, and three-page French report in 6.35 seconds. Page
+  counts and expected content matched the earlier private tests.
+- The local Rails attachment flow was rechecked against the public HTTPS URL
+  using normal DNS and a process-only endpoint override: HTTP 200, PDF content,
+  and the expected download filename. No poll-app files changed.
+- Cloudflare's production `pdf.app.do` record was compared before/after the
+  staging record creation and was unchanged; it still points to Heroku.
