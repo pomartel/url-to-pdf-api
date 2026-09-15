@@ -49,3 +49,8 @@ jspm_packages
 
 # Yarn Integrity file
 .yarn-integrity
+
+# Browser cache and Python test artifacts
+.cache/
+__pycache__/
+*.pyc

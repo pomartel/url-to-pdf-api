@@ -2,6 +2,10 @@
 
 // Env vars should be casted to correct types
 const config = {
+  HOST: process.env.HOST || '0.0.0.0',
+  MAX_CONCURRENT_RENDERS: Number(process.env.MAX_CONCURRENT_RENDERS) || 1,
+  RENDER_TIMEOUT_MS: Number(process.env.RENDER_TIMEOUT_MS) || 23000,
+  CHROME_NO_SANDBOX: process.env.CHROME_NO_SANDBOX === 'true',
   PORT: Number(process.env.PORT) || 9000,
   NODE_ENV: process.env.NODE_ENV,
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',

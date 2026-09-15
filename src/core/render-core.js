@@ -6,7 +6,8 @@ const logger = require('../util/logger')(__filename);
 
 async function createBrowser(opts) {
   const browserOpts = {
-    ignoreHTTPSErrors: opts.ignoreHttpsErrors,
+    acceptInsecureCerts: opts.ignoreHttpsErrors,
+    timeout: config.RENDER_TIMEOUT_MS,
     sloMo: config.DEBUG_MODE ? 250 : undefined,
   };
   if (config.BROWSER_WS_ENDPOINT) {
@@ -16,12 +17,35 @@ async function createBrowser(opts) {
   if (config.BROWSER_EXECUTABLE_PATH) {
     browserOpts.executablePath = config.BROWSER_EXECUTABLE_PATH;
   }
+  browserOpts.pipe = true;
   browserOpts.headless = !config.DEBUG_MODE;
-  browserOpts.args = ['--no-sandbox', '--disable-setuid-sandbox'];
-  if (!opts.enableGPU || navigator.userAgent.indexOf('Win') !== -1) {
+  browserOpts.args = config.CHROME_NO_SANDBOX ? ['--no-sandbox', '--disable-setuid-sandbox'] : [];
+  browserOpts.args.push('--disable-dev-shm-usage');
+  if (!opts.enableGPU || process.platform === 'win32') {
     browserOpts.args.push('--disable-gpu');
   }
   return puppeteer.launch(browserOpts);
+}
+
+
+async function closeBrowser(browser) {
+  const child = browser.process();
+  const forceClose = setTimeout(() => {
+    if (child && child.exitCode === null) {
+      try {
+        // Puppeteer launches a process group on Linux; also stop Chrome's children.
+        if (process.platform === 'linux') process.kill(-child.pid, 'SIGKILL');
+        else child.kill('SIGKILL');
+      } catch (err) {
+        if (err.code !== 'ESRCH') child.kill('SIGKILL');
+      }
+    }
+  }, 750);
+  try {
+    await browser.close();
+  } finally {
+    clearTimeout(forceClose);
+  }
 }
 
 async function getFullPageHeight(page) {
@@ -70,42 +94,26 @@ async function render(_opts = {}) {
     opts.pdf.format = undefined;
   }
 
-  if (config.LOG_LEVEL === 'silly') {
-    logOpts(opts);
-  }
-
-  const browser = await createBrowser(opts);
-  const page = await browser.newPage();
-
-  page.on('console', (...args) => logger.info('PAGE LOG:', ...args));
-
-  page.on('error', (err) => {
-    logger.error(`Error event emitted: ${err}`);
-    logger.error(err.stack);
-    browser.close();
-  });
-
-
-  this.failedResponses = [];
-  page.on('requestfailed', (request) => {
-    this.failedResponses.push(request);
-    if (request.url === opts.url) {
-      this.mainUrlResponse = request;
-    }
-  });
-
-  page.on('response', (response) => {
-    if (response.status >= 400) {
-      this.failedResponses.push(response);
-    }
-
-    if (response.url === opts.url) {
-      this.mainUrlResponse = response;
-    }
-  });
-
+  let browser;
+  let timer;
+  let expired = false;
+  const started = Date.now();
   let data;
   try {
+    browser = await createBrowser(opts);
+    timer = setTimeout(() => {
+      expired = true;
+      closeBrowser(browser).catch(() => {});
+    }, Math.max(1, config.RENDER_TIMEOUT_MS - (Date.now() - started)));
+    const page = await browser.newPage();
+    const failedResponses = [];
+    let mainUrlResponse;
+    page.on('error', () => { closeBrowser(browser).catch(() => {}); });
+    page.on('requestfailed', request => failedResponses.push(request));
+    page.on('response', (response) => {
+      if (response.status() >= 400) failedResponses.push(response);
+      if (response.url() === opts.url) mainUrlResponse = response;
+    });
     logger.debug('Set browser viewport..');
     await page.setViewport(opts.viewport);
     if (opts.emulateScreenMedia) {
@@ -126,13 +134,14 @@ async function render(_opts = {}) {
       logger.debug('Set HTML ..');
       await page.setContent(opts.html, opts.goto);
     } else {
-      logger.debug(`Goto url ${opts.url} ..`);
+      logger.debug('Loading render destination');
       await page.goto(opts.url, opts.goto);
     }
 
-    if (_.isNumber(opts.waitFor) || _.isString(opts.waitFor)) {
-      logger.debug(`Wait for ${opts.waitFor} ..`);
-      await page.waitFor(opts.waitFor);
+    if (_.isNumber(opts.waitFor)) {
+      await page.evaluate(ms => new Promise(resolve => setTimeout(resolve, ms)), opts.waitFor);
+    } else if (_.isString(opts.waitFor)) {
+      await page.waitForSelector(opts.waitFor);
     }
 
     if (opts.scrollPage) {
@@ -140,20 +149,17 @@ async function render(_opts = {}) {
       await scrollPage(page);
     }
 
-    if (this.failedResponses.length) {
-      logger.warn(`Number of failed requests: ${this.failedResponses.length}`);
-      this.failedResponses.forEach((response) => {
-        logger.warn(`${response.status} ${response.url}`);
-      });
+    if (failedResponses.length) {
+      logger.warn(`Number of failed requests: ${failedResponses.length}`);
 
       if (opts.failEarly === 'all') {
-        const err = new Error(`${this.failedResponses.length} requests have failed. See server log for more details.`);
+        const err = new Error(`${failedResponses.length} requests have failed. See server log for more details.`);
         err.status = 412;
         throw err;
       }
     }
-    if (opts.failEarly === 'page' && this.mainUrlResponse.status !== 200) {
-      const msg = `Request for ${opts.url} did not directly succeed and returned status ${this.mainUrlResponse.status}`;
+    if (opts.failEarly === 'page' && (!mainUrlResponse || mainUrlResponse.status() !== 200)) {
+      const msg = 'Render destination did not return HTTP 200';
       const err = new Error(msg);
       err.status = 412;
       throw err;
@@ -174,7 +180,7 @@ async function render(_opts = {}) {
         const height = await getFullPageHeight(page);
         opts.pdf.height = height;
       }
-      data = await page.pdf(opts.pdf);
+      data = Buffer.from(await page.pdf(opts.pdf));
     } else if (opts.output === 'html') {
       data = await page.evaluate(() => document.documentElement.innerHTML);
     } else {
@@ -186,23 +192,24 @@ async function render(_opts = {}) {
         screenshotOpts.clip = opts.screenshot.clip;
       }
       if (_.isNil(opts.screenshot.selector)) {
-        data = await page.screenshot(screenshotOpts);
+        data = Buffer.from(await page.screenshot(screenshotOpts));
       } else {
         const selElement = await page.$(opts.screenshot.selector);
         if (!_.isNull(selElement)) {
-          data = await selElement.screenshot();
+          data = Buffer.from(await selElement.screenshot());
         }
       }
     }
   } catch (err) {
-    logger.error(`Error when rendering page: ${err}`);
-    logger.error(err.stack);
+    if (expired) {
+      const timeoutError = new Error('Render deadline exceeded');
+      timeoutError.status = 504;
+      throw timeoutError;
+    }
     throw err;
   } finally {
-    logger.debug('Closing browser..');
-    if (!config.DEBUG_MODE) {
-      await browser.close();
-    }
+    clearTimeout(timer);
+    if (browser) await closeBrowser(browser);
   }
 
   return data;
@@ -236,15 +243,6 @@ async function scrollPage(page) {
       scrollDown();
     });
   });
-}
-
-function logOpts(opts) {
-  const supressedOpts = _.cloneDeep(opts);
-  if (opts.html) {
-    supressedOpts.html = '...';
-  }
-
-  logger.info(`Rendering with opts: ${JSON.stringify(supressedOpts, null, 2)}`);
 }
 
 module.exports = {

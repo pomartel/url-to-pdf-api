@@ -1,0 +1,7 @@
+[Unit]
+Description=Activate PDF HTTPS after staging DNS is configured
+After=network-online.target caddy.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/url-to-pdf-api/deploy/activate-https.sh

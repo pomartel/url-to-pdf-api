@@ -2,7 +2,7 @@ const { URL } = require('url');
 const _ = require('lodash');
 const normalizeUrl = require('normalize-url');
 const ex = require('../util/express');
-const renderCore = require('../core/render-core');
+const renderCore = require('../core/render-limited');
 const logger = require('../util/logger')(__filename);
 const config = require('../config');
 
@@ -103,10 +103,14 @@ function isUrlAllowed(inputUrl) {
   const urlParts = new URL(inputUrl);
 
   const matchInfos = _.map(config.ALLOW_URLS, (urlPattern) => {
-    if (_.startsWith(urlPattern, 'host:')) {
+    if (_.startsWith(urlPattern, 'domain:')) {
+      const domain = urlPattern.slice(7).toLowerCase();
+      const host = urlParts.hostname.toLowerCase();
+      return { match: urlParts.protocol === 'https:' && (host === domain || host.endsWith(`.${domain}`)) };
+    } else if (_.startsWith(urlPattern, 'host:')) {
       return isHostMatch(urlPattern.split(':')[1], urlParts.host);
     } else if (_.startsWith(urlPattern, 'regex:')) {
-      return isRegexMatch(urlPattern.split(':')[1], inputUrl);
+      return isRegexMatch(urlPattern.slice(6), inputUrl);
     }
 
     return isNormalizedMatch(urlPattern, inputUrl);
@@ -114,10 +118,7 @@ function isUrlAllowed(inputUrl) {
 
   const isAllowed = _.some(matchInfos, info => info.match);
   if (!isAllowed) {
-    logger.info('The url was not allowed because:');
-    _.forEach(matchInfos, (info) => {
-      logger.info(`${info.part1} !== ${info.part2} (with ${info.type} matching)`);
-    });
+    logger.info('Render destination rejected by allowlist');
   }
 
   return isAllowed;

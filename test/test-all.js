@@ -17,6 +17,9 @@ BPromise.config({
 
 // Allow HTTP for tests
 config.ALLOW_HTTP = true;
+// Hosted runners do not install the server's Chrome AppArmor profile.
+// eslint-disable-next-line no-process-env
+if (process.env.GITHUB_ACTIONS === 'true') config.CHROME_NO_SANDBOX = true;
 
 const app = createApp();
 

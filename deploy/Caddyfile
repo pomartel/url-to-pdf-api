@@ -1,0 +1,6 @@
+pdf-linode.app.do {
+	tls {
+		issuer acme
+	}
+	reverse_proxy 127.0.0.1:9000
+}

@@ -1,0 +1,10 @@
+[Unit]
+Description=Check staging PDF DNS once a minute
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=60
+Unit=pdf-https-ready.service
+
+[Install]
+WantedBy=timers.target

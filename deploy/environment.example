@@ -1,0 +1,12 @@
+NODE_ENV=production
+HOST=127.0.0.1
+PORT=9000
+ALLOW_HTTP=false
+API_TOKENS=replace-with-existing-secret
+ALLOW_URLS=domain:app.do,domain:app.ps
+DISABLE_HTML_INPUT=true
+LOG_LEVEL=warn
+MAX_CONCURRENT_RENDERS=1
+RENDER_TIMEOUT_MS=23000
+PUPPETEER_CACHE_DIR=/var/cache/pdf-renderer
+CHROME_NO_SANDBOX=false

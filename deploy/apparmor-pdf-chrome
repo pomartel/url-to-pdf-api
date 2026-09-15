@@ -1,0 +1,6 @@
+abi <abi/4.0>,
+include <tunables/global>
+
+profile pdf-chrome /var/cache/pdf-renderer/chrome/**/chrome flags=(unconfined) {
+  userns,
+}

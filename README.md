@@ -2,6 +2,12 @@
 
 # URL to PDF Microservice
 
+## Linode deployment
+
+See [the Linode runbook](docs/linode.md) for the Ubuntu Nanode deployment,
+private smoke tests, staging DNS activation, and migration results.
+
+
 This repo is initially forked from https://github.com/alvarcarto/url-to-pdf-api. The original repo haven't been maintained for a long time. Initial document can be found on that repo. This readme is cleaned for the Kesko purposes.
 
 > Microservice for rendering receipts, invoices, or any content. Packaged to an easy API.

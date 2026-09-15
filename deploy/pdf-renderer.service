@@ -1,0 +1,26 @@
+[Unit]
+Description=Poll PDF renderer
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pdf-renderer
+Group=pdf-renderer
+WorkingDirectory=/opt/url-to-pdf-api
+EnvironmentFile=/etc/pdf-renderer.env
+ExecStart=/usr/local/bin/node src/index.js
+Restart=always
+RestartSec=3
+TimeoutStopSec=5
+KillMode=control-group
+MemoryMax=800M
+MemorySwapMax=512M
+TasksMax=256
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/pdf-renderer /var/cache/pdf-renderer
+
+[Install]
+WantedBy=multi-user.target

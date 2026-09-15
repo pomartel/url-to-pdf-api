@@ -28,6 +28,7 @@ function createErrorResponder(_opts) {
       ? JSON.stringify(err)
       : { status, statusText: httpMessage, messages: [message] };
 
+    if (status === 503) res.set('Retry-After', '2');
     res.status(status);
     res.send(body);
   };

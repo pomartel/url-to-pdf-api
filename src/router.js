@@ -26,6 +26,8 @@ function createRouter() {
     logger.warn('Warning: no authentication required to use the API');
   }
 
+  router.get('/healthz', (req, res) => res.json({ status: 'ok' }));
+
   const getRenderSchema = {
     query: renderQuerySchema,
     options: {

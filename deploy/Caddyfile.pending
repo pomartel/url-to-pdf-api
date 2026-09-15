@@ -1,0 +1,3 @@
+http://pdf-linode.app.do {
+	respond "PDF staging: DNS activation pending" 503
+}
