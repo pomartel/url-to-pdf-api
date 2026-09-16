@@ -5,7 +5,11 @@
 The renderer is staged on `poll-to-pdf` (Linode ID `105312987`), a 1 GB
 Nanode in Newark (`us-east`), at `96.126.107.57`. It uses Ubuntu 24.04 LTS,
 Node 22.23.2, the exact Puppeteer version in package.json, and Puppeteer's
-matching Chrome build. SSH: `ssh po@96.126.107.57`.
+matching Chrome build. SSH: `tailscale ssh po@poll-to-pdf` (Tailscale IP `100.114.226.11`).
+Tailscale SSH (`tailscale set --ssh`) enforces the `pomartel.github` tailnet policy.
+Both `ssh.service` and `ssh.socket` are stopped and masked; public IPv4 and IPv6
+SSH listeners are disabled. Use the Linode console for recovery if Tailscale
+is unavailable.
 
 The live staging endpoint is `https://pdf-linode.app.do/api/render`.
 Cloudflare has a DNS-only A record pointing to `96.126.107.57` (TTL 300),
@@ -20,7 +24,11 @@ has completed and is disabled; Caddy handles certificate renewal.
    initial root password securely; never put it in Git or logs.
 2. Copy `deploy/bootstrap.sh` to the new instance and run it as root. It
    installs system dependencies, Node, fonts, and a key-only `po` administrator.
-   Subsequent access uses `po`; direct root/password SSH is disabled.
+   Register the server in Tailscale and enable `sudo tailscale set --ssh`.
+   Verify `tailscale ssh po@poll-to-pdf hostname` from another tailnet machine,
+   then run `sudo systemctl disable --now ssh.socket ssh.service` and
+   `sudo systemctl mask ssh.socket ssh.service`. Subsequent access uses
+   Tailscale SSH as `po`; public SSH is disabled.
 3. Extract this repository into `/opt/url-to-pdf-api`. Create
    `/etc/pdf-renderer.env` as root, mode 600, using `deploy/environment.example`.
    Transfer the existing Heroku `API_TOKENS` value securely. Do not source
@@ -114,7 +122,7 @@ rendered pages with `pdftoppm` before declaring visual parity.
 While DNS is pending:
 
 ```bash
-ssh -N -L 19000:127.0.0.1:9000 po@96.126.107.57
+ssh -N -L 19000:127.0.0.1:9000 po@100.114.226.11
 # In another terminal, use the same smoke command with:
 # --endpoint http://127.0.0.1:19000/api/render --tunnel
 ```
