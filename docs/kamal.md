@@ -2,15 +2,17 @@
 
 ## Target and scope
 
-Migration status: image validation in progress; DNS still routes to the original
-Nanode until the cutover checks below succeed.
+Migration completed on 2026-09-17. `pdf-linode.app.do` now resolves to
+`192.53.122.28` (DNS-only A record, TTL 300). The running application revision is
+`44cb3618d206a3e24459c44869e835fed69e3d29`. Kamal manages the HTTPS certificate
+and renewals using its persistent proxy certificate cache.
 
 Kamal 2.12.0 deploys service `poll-to-pdf` to the shared `poll` Linode
 (`100.67.232.123` over Tailscale, public IPv4 `192.53.122.28`).
 The public endpoint remains `https://pdf-linode.app.do/api/render`.
-The old Nanode (`96.126.107.57`) stays available for rollback until the new
-service has been observed. This migration does not retire the Nanode or change
-`pdf.app.do` or `pdf.app.ps`.
+After successful cutover checks, the old `poll-to-pdf` Nanode (ID `105312987`,
+`96.126.107.57`) was deleted on 2026-09-17 at the owner's request. Do not restore
+DNS to that retired address. `pdf.app.do` and `pdf.app.ps` were not changed.
 
 ## Image and isolation
 
@@ -38,8 +40,8 @@ published by this service.
 `GET /up` is a public, constant liveness response accepted over internal HTTP
 for Kamal. `/healthz` and rendering routes still require HTTPS and the API key.
 The health probe does not launch Chrome; always validate an actual PDF after
-changing the image. Application logs omit raw render URLs and API keys. The existing shared
-Kamal proxy logs request query strings (including report access tokens), like
+changing the image. Application logs omit raw render URLs and API keys.
+The existing shared Kamal proxy logs request query strings (including report access tokens), like
 it already does for the poll report routes. Its Docker logs are root-only,
 local, and rotated at 10 MB; never forward these raw logs to another service
 or include them in support output. API keys are headers and are not included
@@ -48,23 +50,25 @@ in the proxy's configured request headers.
 ## Deployment
 
 1. Authenticate Tailscale SSH to `root@100.67.232.123`.
-2. Copy `.kamal/secrets.example` to `.kamal/secrets`, set mode 600, and transfer
-   the existing renderer's `API_TOKENS` privately. Do not generate a replacement
-   key during migration. The existing registry is `127.0.0.1:5555` on the host.
+2. Keep the existing `.kamal/secrets` (mode 600). On a new deployment machine,
+   copy `.kamal/secrets.example` and restore `API_TOKENS` from a secure copy or
+   the running service's root-only Kamal environment file. Preserve the existing
+   key so Rails clients continue to authenticate. The shared registry is
+   `127.0.0.1:5555` on the host.
 3. Commit the revision; Kamal builds committed source. Run `bin/deploy deploy`.
    The wrapper builds through the shared server's Docker daemon over SSH.
    Heavy image builds compete with Rails: monitor available RAM and CPU.
-4. For the first migration, validate the new container's authenticated health,
-   actual English/French PDFs and network isolation before changing DNS.
-   Record the original Cloudflare DNS record and retain the old renderer.
-5. Move only the DNS-only A record `pdf-linode.app.do` from `96.126.107.57` to
-   `192.53.122.28`. Kamal manages HTTPS automatically; certificate issuance
-   requires that DNS route to the new host. Verify public TLS and PDF rendering
-   after the move, including Rails' download attachment flow.
+4. Check authenticated health and a real PDF after deployment.
 
-The old endpoint remains live while preparing the new container. For an initial
-pre-DNS validation, use an isolated candidate container or a temporary hostname;
-`kamal deploy` with automatic HTTPS may wait for DNS/certificate validation.
+### Completed host migration
+
+For this migration, we transferred the existing Caddy certificate privately and
+used a temporary Kamal configuration with `proxy.ssl.certificate_pem` and
+`proxy.ssl.private_key_pem`. This allowed HTTPS and a real PDF to be checked on
+the new IP with `curl --resolve` before DNS changed. After the DNS move we ran
+`bin/deploy deploy --skip-push` with the committed automatic-HTTPS configuration;
+Kamal issued a new certificate and replaced the bootstrap container. Temporary
+certificate copies and the bootstrap secrets/configuration were then removed.
 Never claim success based only on `/up`.
 
 Useful commands:
@@ -75,9 +79,12 @@ bin/deploy app logs
 bin/deploy rollback COMMIT_SHA
 ```
 
-Rollback the initial host move by restoring the saved Cloudflare A record to
-`96.126.107.57`. Leave Caddy and `pdf-renderer` running on that host throughout
-the observation period. For subsequent code changes, use Kamal rollback.
+Use Kamal rollback to a previously validated image on the shared server. Two
+stopped containers are retained. The initial known-good image is
+`44cb3618d206a3e24459c44869e835fed69e3d29`; the earlier preparation commits did
+not contain a working Docker image. The retired Nanode is no longer a rollback
+target. The renderer is stateless; source, locked dependencies, the API secret,
+and Kamal's proxy certificate storage are sufficient to recreate it.
 
 ## Validation
 
@@ -93,3 +100,37 @@ hosts/HTML and missing keys are rejected; private IPv4/IPv6 connections fail;
 `NET_ADMIN` is absent from the Node process's bounding set; timeout recovery and
 concurrency limits work; memory stays below the limit; and poll apps remain
 healthy. Use `scripts/smoke.py` with private key/case files for PDF comparisons.
+
+## Migration validation (2026-09-17)
+
+- Node 22 local suite: 14 tests pass, including unauthenticated liveness while
+  authenticated routes still enforce HTTPS/API keys; lint passes. Shell syntax,
+  Kamal configuration and `git diff --check` pass.
+- Image build explicitly installs Chrome (including `unzip`) and checks the
+  asynchronously resolved executable path. The runtime sets `HOME=/home/node`
+  before dropping privileges, so Chrome can create its crash/profile data.
+- Chrome reports namespace, PID, network and seccomp-BPF sandboxing active.
+  Node runs with UID 1000, no effective capabilities and no `NET_ADMIN` in its
+  bounding set. Connections to the host gateway, PostgreSQL, Redis, metadata,
+  Tailscale and IPv6 loopback are rejected.
+- Six actual results/statistics exports pass across fr/en/de/es/pt and A4/Letter.
+  They match the original service's page counts (two-page results, three-page
+  statistics), contain the expected titles, and show intact charts, accented
+  text and multi-page answer lists on visual inspection.
+- Direct-container renders take 6.28–7.55 seconds; public HTTPS renders take
+  6.78–10.82 seconds. Candidate peak memory is 464,629,760 bytes (443 MiB),
+  with no OOM events under the 800 MiB limit.
+- Concurrent work returns 503 with `Retry-After: 2`; a forced deadline returns
+  504 in 23.08 seconds; the next PDF succeeds in 6.46 seconds.
+- Public checks: valid TLS, HTTP redirect, `/up` 200, `/healthz` 401 without a
+  valid key and 200 with one; a metadata URL returns 403.
+- Rails production integration uses the real report page, session and CSRF
+  token: PDF attachment 200, correct filename, 66,197 bytes in 9.49 seconds.
+  Run rendering checks sequentially: the renderer intentionally rejects
+  concurrent checks with 503.
+- Both poll-fr and staging `/up` remain healthy. After verification and explicit
+  owner authorization, Linode ID `105312987` was deleted. The Linode inventory
+  retains `poll` (ID `105330879`) and `serveur-prof`; `pdf.app.do` still points
+  to Heroku. A fresh PDF render was checked after the deletion.
+- Automatic HTTPS was verified after the second Kamal rollout: the new
+  certificate was issued on September 17 and expires December 16, 2026.

@@ -1,24 +1,14 @@
-# Linode PDF renderer
+# Original Linode PDF deployment (retired)
 
-For the Kamal migration to the shared poll host, see [Kamal operations](kamal.md).
-The following describes the original Nanode deployment and its rollback service.
+Historical reference only. The dedicated `poll-to-pdf` Nanode (Linode ID
+`105312987`, `96.126.107.57`, Tailscale `100.114.226.11`) was deleted on
+2026-09-17 after the migration and explicit owner authorization.
 
-## Deployment
-
-The renderer is staged on `poll-to-pdf` (Linode ID `105312987`), a 1 GB
-Nanode in Newark (`us-east`), at `96.126.107.57`. It uses Ubuntu 24.04 LTS,
-Node 22.23.2, the exact Puppeteer version in package.json, and Puppeteer's
-matching Chrome build. SSH: `tailscale ssh po@poll-to-pdf` (Tailscale IP `100.114.226.11`).
-Tailscale SSH (`tailscale set --ssh`) enforces the `pomartel.github` tailnet policy.
-Both `ssh.service` and `ssh.socket` are stopped and masked; public IPv4 and IPv6
-SSH listeners are disabled. Use the Linode console for recovery if Tailscale
-is unavailable.
-
-The live staging endpoint is `https://pdf-linode.app.do/api/render`.
-Cloudflare has a DNS-only A record pointing to `96.126.107.57` (TTL 300),
-and Caddy serves a valid Let's Encrypt certificate. The DNS activation timer
-has completed and is disabled; Caddy handles certificate renewal.
-**Production `pdf.app.do` and the Heroku apps have not been switched.**
+The service now runs through Kamal on the shared `poll` host. The endpoint
+`https://pdf-linode.app.do/api/render` points to `192.53.122.28`.
+See [Kamal operations](kamal.md) for current deployment and rollback instructions.
+Do not restore DNS to the retired IP. The instructions and September 15
+validation below describe the former systemd/Caddy deployment.
 
 ### Recreate the server
 

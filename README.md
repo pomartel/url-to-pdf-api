@@ -2,10 +2,12 @@
 
 # URL to PDF Microservice
 
-## Linode deployment
+## Kamal deployment
 
-See [the Linode runbook](docs/linode.md) for the Ubuntu Nanode deployment,
-private smoke tests, staging DNS activation, and migration results.
+The renderer runs on the shared `poll` Linode at `https://pdf-linode.app.do`.
+See [Kamal operations](docs/kamal.md) for deployment, secrets, resource limits,
+validation and rollback. The former dedicated PDF Nanode has been deleted;
+its [systemd/Caddy runbook](docs/linode.md) is retained as historical reference.
 
 
 This repo is initially forked from https://github.com/alvarcarto/url-to-pdf-api. The original repo haven't been maintained for a long time. Initial document can be found on that repo. This readme is cleaned for the Kesko purposes.
@@ -32,7 +34,7 @@ and requests are direct connections to it.
 
 * **By default, page's `@media print` CSS rules are ignored**. We set Chrome to emulate `@media screen` to make the default PDFs look more like actual sites. To get results closer to desktop Chrome, add `&emulateScreenMedia=false` query parameter. See more at [Puppeteer API docs](https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#pagepdfoptions).
 
-* Chrome is launched with `--no-sandbox --disable-setuid-sandbox` flags to fix usage in Heroku. See [this issue](https://github.com/GoogleChrome/puppeteer/issues/290).
+* Chrome uses its sandbox by default, including the Kamal deployment. The legacy Heroku Procfile explicitly sets `CHROME_NO_SANDBOX=true` for that platform.
 
 * Heavy pages may cause Chrome to crash if the server doesn't have enough RAM.
 
