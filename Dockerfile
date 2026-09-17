@@ -15,7 +15,10 @@ RUN curl -fsSL https://raw.githubusercontent.com/debitoor/heroku-buildpack-conve
     && rm /tmp/fonts.tar.gz && fc-cache -f
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force \
+RUN npm ci --omit=dev \
+    && npx puppeteer browsers install chrome \
+    && test -x "$(node -p 'require("puppeteer").executablePath()')" \
+    && npm cache clean --force \
     && chmod -R a+rX /opt/puppeteer \
     && find /opt/puppeteer -name chrome_sandbox -exec chown root:root {} \; -exec chmod 4755 {} \;
 COPY src ./src
