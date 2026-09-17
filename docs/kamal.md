@@ -2,8 +2,8 @@
 
 ## Target and scope
 
-Migration status: configuration prepared; container validation, deployment and
-DNS cutover are pending Tailscale SSH authentication.
+Migration status: image validation in progress; DNS still routes to the original
+Nanode until the cutover checks below succeed.
 
 Kamal 2.12.0 deploys service `poll-to-pdf` to the shared `poll` Linode
 (`100.67.232.123` over Tailscale, public IPv4 `192.53.122.28`).
@@ -38,7 +38,12 @@ published by this service.
 `GET /up` is a public, constant liveness response accepted over internal HTTP
 for Kamal. `/healthz` and rendering routes still require HTTPS and the API key.
 The health probe does not launch Chrome; always validate an actual PDF after
-changing the image. Raw render URLs and API keys must not be logged.
+changing the image. Application logs omit raw render URLs and API keys. The existing shared
+Kamal proxy logs request query strings (including report access tokens), like
+it already does for the poll report routes. Its Docker logs are root-only,
+local, and rotated at 10 MB; never forward these raw logs to another service
+or include them in support output. API keys are headers and are not included
+in the proxy's configured request headers.
 
 ## Deployment
 
