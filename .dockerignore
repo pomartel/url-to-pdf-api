@@ -1,0 +1,7 @@
+*
+!package.json
+!package-lock.json
+!src/
+!src/**
+!deploy/
+!deploy/container-entrypoint

@@ -1,5 +1,8 @@
 # Linode PDF renderer
 
+For the Kamal migration to the shared poll host, see [Kamal operations](kamal.md).
+The following describes the original Nanode deployment and its rollback service.
+
 ## Deployment
 
 The renderer is staged on `poll-to-pdf` (Linode ID `105312987`), a 1 GB

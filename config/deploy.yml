@@ -1,0 +1,50 @@
+service: poll-to-pdf
+image: poll-to-pdf
+minimum_version: 2.12.0
+servers:
+  web:
+    hosts:
+      - 100.67.232.123
+    options:
+      init: true
+      memory: 800m
+      memory-swap: 1312m
+      cpus: 1
+      pids-limit: 256
+      cap-add:
+        - SYS_ADMIN
+        - NET_ADMIN
+proxy:
+  host: pdf-linode.app.do
+  ssl: true
+  app_port: 9000
+  healthcheck:
+    path: /up
+    timeout: 5
+  response_timeout: 30
+registry:
+  server: 127.0.0.1:5555
+  username: poll-to-pdf
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+builder:
+  arch: amd64
+  driver: docker
+ssh:
+  user: root
+env:
+  clear:
+    NODE_ENV: production
+    HOST: 0.0.0.0
+    PORT: 9000
+    ALLOW_HTTP: 'false'
+    ALLOW_URLS: domain:app.do,domain:app.ps
+    DISABLE_HTML_INPUT: 'true'
+    LOG_LEVEL: warn
+    MAX_CONCURRENT_RENDERS: 1
+    RENDER_TIMEOUT_MS: 23000
+    CHROME_NO_SANDBOX: 'false'
+  secret:
+    - API_TOKENS
+deploy_timeout: 120
+retain_containers: 2

@@ -54,3 +54,8 @@ jspm_packages
 .cache/
 __pycache__/
 *.pyc
+
+# Kamal runtime secrets
+.kamal/secrets
+.kamal/secrets.*
+!.kamal/secrets.example

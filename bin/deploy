@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+export DOCKER_HOST="${DOCKER_HOST:-ssh://root@100.67.232.123}"
+exec kamal "${@:-deploy}"

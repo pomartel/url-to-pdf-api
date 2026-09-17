@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+: "${API_TOKENS:?API_TOKENS must be set}"
+# Apply isolation inside this container's network namespace only. Never modify
+# the shared host's firewall. Replies to the Kamal proxy remain permitted.
+iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -A OUTPUT -d 127.0.0.11 -p udp -j ACCEPT
+iptables -A OUTPUT -d 127.0.0.11 -p tcp -j ACCEPT
+for network in 0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 127.0.0.0/8 169.254.0.0/16 172.16.0.0/12 192.168.0.0/16 224.0.0.0/4 240.0.0.0/4; do
+  iptables -A OUTPUT -d "$network" -j REJECT
+done
+ip6tables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+for network in ::/128 ::1/128 ::ffff:0:0/96 fc00::/7 fe80::/10 ff00::/8; do
+  ip6tables -A OUTPUT -d "$network" -j REJECT
+done
+# Remove NET_ADMIN from the bounding set before executing any application code:
+# even a setuid subprocess cannot undo the network restrictions.
+exec setpriv --reuid=node --regid=node --init-groups --bounding-set=-net_admin "$@"

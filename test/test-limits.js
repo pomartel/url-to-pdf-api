@@ -17,6 +17,18 @@ describe('renderer resource controls and authentication', () => {
   });
   afterEach(() => Object.assign(config, original));
 
+  it('allows only liveness without HTTPS or authentication', async () => {
+    config.ALLOW_HTTP = false;
+    app = createApp();
+    await request(app).get('/up')
+      .expect(200, 'OK');
+    await request(app).get('/healthz').expect(403);
+    await request(app).get('/healthz').set('x-forwarded-proto', 'https').expect(401);
+    await request(app).post('/api/render').set('x-forwarded-proto', 'https')
+      .send({ html: 'test' })
+      .expect(401);
+  });
+
   it('authenticates health and render requests', async () => {
     await request(app).get('/healthz').expect(401);
     await request(app).get('/healthz').set('x-api-key', 'wrong').expect(401);

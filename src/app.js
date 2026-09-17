@@ -12,7 +12,7 @@ const config = require('./config');
 
 function createApp() {
   const app = express();
-  // App is served behind Heroku's router.
+  // App is served behind Heroku's router or Kamal proxy.
   // This is needed to be able to use req.ip or req.secure
   app.enable('trust proxy', 1);
   app.disable('x-powered-by');
@@ -20,6 +20,10 @@ function createApp() {
   if (config.NODE_ENV !== 'production') {
     app.use(morgan('dev'));
   }
+
+  // Kamal probes over HTTP without API credentials. Expose only liveness;
+  // /healthz and every rendering route retain HTTPS and API authentication.
+  app.get('/up', (req, res) => res.status(200).send('OK'));
 
   if (!config.ALLOW_HTTP) {
     logger.info('All requests require HTTPS.');
