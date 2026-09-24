@@ -12,7 +12,10 @@ Kamal 2.12.0 deploys service `poll-to-pdf` to the shared `poll` Linode
 The public endpoint remains `https://pdf-linode.app.do/api/render`.
 After successful cutover checks, the old `poll-to-pdf` Nanode (ID `105312987`,
 `96.126.107.57`) was deleted on 2026-09-17 at the owner's request. Do not restore
-DNS to that retired address. `pdf.app.do` and `pdf.app.ps` were not changed.
+DNS to that retired address. The explicit `pdf.app.do` CNAME to Heroku was
+removed on 2026-09-24. The `*.app.do` wildcard now resolves that name to the
+shared `poll` server, where the poll app redirects it to `https://app.do/`.
+`pdf.app.ps` was not changed.
 
 ## Image and isolation
 
@@ -41,11 +44,12 @@ published by this service.
 for Kamal. `/healthz` and rendering routes still require HTTPS and the API key.
 The health probe does not launch Chrome; always validate an actual PDF after
 changing the image. Application logs omit raw render URLs and API keys.
-The existing shared Kamal proxy logs request query strings (including report access tokens), like
-it already does for the poll report routes. Its Docker logs are root-only,
-local, and rotated at 10 MB; never forward these raw logs to another service
-or include them in support output. API keys are headers and are not included
-in the proxy's configured request headers.
+The existing shared Kamal proxy logs request query strings (including report
+access tokens), like it already does for the poll report routes. Its Docker
+logs are root-only, local, and rotated at 100 MB across up to 50 files; never
+forward these raw logs to another service or include them in support output.
+API keys are headers and are not included in the proxy's configured request
+headers.
 
 ## Deployment
 
@@ -130,7 +134,8 @@ healthy. Use `scripts/smoke.py` with private key/case files for PDF comparisons.
   concurrent checks with 503.
 - Both poll-fr and staging `/up` remain healthy. After verification and explicit
   owner authorization, Linode ID `105312987` was deleted. The Linode inventory
-  retains `poll` (ID `105330879`) and `serveur-prof`; `pdf.app.do` still points
-  to Heroku. A fresh PDF render was checked after the deletion.
+  retains `poll` (ID `105330879`) and `serveur-prof`. At the time,
+  `pdf.app.do` still pointed to Heroku; its explicit DNS record was removed on
+  2026-09-24. A fresh PDF render was checked after the Nanode deletion.
 - Automatic HTTPS was verified after the second Kamal rollout: the new
   certificate was issued on September 17 and expires December 16, 2026.
